@@ -1,0 +1,23 @@
+To make Sunsetter compile on Compilers ==other than Microsoft MSVC== please try this:
+
+1) Make your compiler (windows compiler other than MSVC) understand _win32_
+Maybe like this:
+#ifdef _WIN32
+#ifndef _win32_
+#define _win32_ 1
+#endif
+#endif
+
+2) Make your compiler treat __forceinline as inline, possibly like this:
+#ifndef _win32_
+#define __forceinline inline
+#endif
+
+3) 
+typedef int socklen_t;
+// one some systems this might not work, then try without the typedef
+
+
+Please test as I am only familiar with MSVC. Thanks!
+
+--georg 9/9/2016

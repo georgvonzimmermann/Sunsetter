@@ -1,0 +1,24 @@
+[Event "Crazyhouse game"]
+[Site "somewhere in the universe"]
+[Date "15'th century"]
+[WhiteA "WHITE"][WhiteAElo "++++"]
+[BlackA "BLACK"][BlackAElo "++++"]
+[WhiteB "WHITE"]
+[BlackB "BLACK"]
+[TimeControl "180+0"]
+[Result "0-1"]
+
+1A. d4 {180} 1a. Nf6 {180} 2A. Bg5 {180} 2a. Ne4 {180} 3A. Nf3 {180} 3a. Nxg5 {180}
+4A. Nxg5 {180} 4a. e6 {180} 5A. Nxf7 {180} 5a. Kxf7 {180} 6A. N@e5+ {180} 6a. Ke8 {180}
+7A. P@f7+ {180} 7a. Ke7 {180} 8A. Nc3 {180} 8a. d6 {180} 9A. d5 {180} 9a. dxe5 {180}
+10A. Qc1 {180} 10a. exd5 {180} 11A. Qg5+ {180} 11a. B@f6 {180} 12A. Qd2 {180}
+12a. P@d4 {180} 13A. e4 {180} 13a. dxc3 {180} 14A. bxc3 {180} 14a. c6 {180}
+15A. P@g5 {180} 15a. Kxf7 {180} 16A. gxf6 {180} 16a. gxf6 {180} 17A. exd5 {180}
+17a. cxd5 {180} 18A. B@f3 {180} 18a. P@c6 {180} 19A. c4 {180} 19a. P@c3 {180}
+20A. Qxc3 {180} 20a. d4 {180} 21A. Qd2 {180} 21a. P@c3 {180}
+22A. Qe2 {180} 22a. N@f4 {180} 23A. Qd1 {180} 23a. N@h4 {180} 24A. Be4 {180}
+24a. N@b2 {180} 25A. P@c7 {180} 25a. Qxc7 {180} 26A. P@d2 {180} 26a. Nxd1 {180}
+27A. Rxd1 {180} 27a. cxd2+ {180} 28A. Rxd2 {180} 28a. P@c3 {180} 29A. N@b3 {180}
+29a. cxd2+ {180} 30A. Nxd2 {180} 30a. R@c1+ {180}
+
+{WHITE checkmated} 0-1
