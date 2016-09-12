@@ -415,10 +415,10 @@ void initBitboards()
          } 
       else 
          {
-         if (sq+ONE_FILE+ONE_RANK < 65)  pawnAttacks[WHITE][sq].setSquare(sq + ONE_FILE + ONE_RANK);
-         if (sq-ONE_FILE+ONE_RANK < 65)  pawnAttacks[WHITE][sq].setSquare(sq - ONE_FILE + ONE_RANK);
-         if (sq+ONE_FILE-ONE_RANK >= 0)  pawnAttacks[BLACK][sq].setSquare(sq + ONE_FILE - ONE_RANK);
-         if (sq-ONE_FILE-ONE_RANK >= 0)  pawnAttacks[BLACK][sq].setSquare(sq - ONE_FILE - ONE_RANK);		 
+         if (sq+ONE_FILE+ONE_RANK <= H8)  pawnAttacks[WHITE][sq].setSquare(sq + ONE_FILE + ONE_RANK);
+         if (sq-ONE_FILE+ONE_RANK <= H8)  pawnAttacks[WHITE][sq].setSquare(sq - ONE_FILE + ONE_RANK);
+         if (sq+ONE_FILE-ONE_RANK >= A1)  pawnAttacks[BLACK][sq].setSquare(sq + ONE_FILE - ONE_RANK);
+         if (sq-ONE_FILE-ONE_RANK >= A1)  pawnAttacks[BLACK][sq].setSquare(sq - ONE_FILE - ONE_RANK);		 
 		}
 
 
