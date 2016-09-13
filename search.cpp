@@ -352,7 +352,7 @@ assert (!AIBoard.badMove(m));
 
    AIBoard.unchangeBoard();
 
-   if(stopThinking) return 0;
+   if(stopThinking) return -INFINITY;
 
    if(value >= beta) {   
 
@@ -362,6 +362,7 @@ assert (!AIBoard.badMove(m));
     beta = INFINITY;
 
 assert (!AIBoard.badMove(m));    
+	
 	AIBoard.changeBoard(m);
 
 	// not -beta + learnValue, since -beta = -INFINITY and we can't allow that to get smaller !
@@ -369,7 +370,7 @@ assert (!AIBoard.badMove(m));
 
     AIBoard.unchangeBoard();
 
-    if(stopThinking) return 0;
+    if(stopThinking) return -INFINITY;
 
   
     else return value;
@@ -388,7 +389,7 @@ assert (!AIBoard.badMove(m));
 
     AIBoard.unchangeBoard();
 
-    if(stopThinking) return 0;
+    if(stopThinking) return -INFINITY;
    
     else return value;
   }
@@ -480,7 +481,7 @@ assert (!AIBoard.badMove(m));
 
   AIBoard.unchangeBoard();
 
-  if(stopThinking) return 0;
+  if(stopThinking) return -INFINITY;
 
   if(value < beta) return value;
 
@@ -497,7 +498,7 @@ assert (!AIBoard.badMove(m));
 
   AIBoard.unchangeBoard();
 
-  if(stopThinking) return 0;  
+  if(stopThinking) return alpha;  
 
 
   return value;
@@ -541,7 +542,7 @@ void searchRoot(int depth, move *rightMove, int *bestValue )
   startDepth = 1;
 
   AIBoard.setCheckHistory(0);
-
+  AIBoard.setBestCapture();
  
   count = AIBoard.moves(searchMoves[0]);  
   
@@ -697,10 +698,13 @@ assert (n <= count); // this checks that the hash move we
 	  
 	  
 	  value =  searchMove(searchMoves[0][movesSearched], FractionalDeep[currentDepth], *bestValue );	 	  
+	
+      values[movesSearched] = value;
 
-      if(stopThinking) break;	
+	  // we are out of time, and are not failing high  
 
-      values[movesSearched] = value; 
+	  if ((stopThinking) && (values[movesSearched]) == -INFINITY)
+		  break;
 
 	  //  We have a new best move, let's save it 
 	  
@@ -711,6 +715,13 @@ assert (n <= count); // this checks that the hash move we
 			savePrincipalVar(*rightMove, 1);
 			printPrincipalVar(*bestValue);	  
 	  }
+
+	  // we are out of time, but the last move from searchMoves() 
+	  // is already failing high. Play that even though we dont know 
+	  // just how good it is
+
+	  if (stopThinking)
+		  break;
   
   }	
 
@@ -743,7 +754,7 @@ assert (n <= count); // this checks that the hash move we
   fclose(fi[0]); 
 #endif
 
-}
+} // end of iterative deepening
 
 if ((*bestValue <= -EXTREME_EVAL) && (! bestMoveLastPly.isBad()) && (!analyzeMode))
  
@@ -830,6 +841,7 @@ void ponder()
 
   gameBoard.copy(&AIBoard);
   AIBoard.setCheckHistory(0);
+  AIBoard.setBestCapture();
 
   stopThinking = 0;
   currentDepth = 1;
@@ -1050,42 +1062,43 @@ inline int recursiveFullSearch(int *alpha, int *beta, int *bestValue, move *best
 		for ( n = 0; n < count; n++)
 		{
 			
-		if ((m[n] == hashMove) && (!hashMove.isBad())) continue; 
+			if ((m[n] == hashMove) && (!hashMove.isBad())) continue; 
 
-assert (!AIBoard.badMove(m[n]));
-		AIBoard.changeBoard(m[n]);	
+	assert (!AIBoard.badMove(m[n]));
 
-		// We don't razor if
+			AIBoard.changeBoard(m[n]);	
 
-		#ifdef DEBUG_STATS
-		stats_RazorTries++;
-		stats_MakeUnmake[ALL_NON_CAP]++;
-		#endif
+			// We don't razor if
+
+			#ifdef DEBUG_STATS
+			stats_RazorTries++;
+			stats_MakeUnmake[ALL_NON_CAP]++;
+			#endif
 		
-		if ( (AIBoard.isInCheck(AIBoard.getColorOnMove()))   
-			// a) we are checking the opp
-			 ||  (AIBoard.highestAttacked(m[n].to())) 
-			// b) we are attacking something with our move thats worth more than or the same as our moved piece, or less defended. 
-			 ||  (AIBoard.escapingAttack(m[n].from(), m[n].to())) )
-			// c) we are escaping with the piece that got attacked in the move before
+			if ( (AIBoard.isInCheck(AIBoard.getColorOnMove()))   
+				// a) we are checking the opp
+				 ||  (AIBoard.highestAttacked(m[n].to())) 
+				// b) we are attacking something with our move thats worth more than or the same as our moved piece, or less defended. 
+				 ||  (AIBoard.escapingAttack(m[n].from(), m[n].to())) )
+				// c) we are escaping with the piece that got attacked in the move before
 			
 
-		{			
+			{			
 
-			// Recursive Search call 
-			value = -search(-(*beta), -(*alpha), depthWithExtensions ,  ply + 1, 0);		
-			AIBoard.unchangeBoard();
+				// Recursive Search call 
+				value = -search(-(*beta), -(*alpha), depthWithExtensions ,  ply + 1, 0);		
+				AIBoard.unchangeBoard();
 
-#ifdef GAMETREE			
+	#ifdef GAMETREE			
 		
-			if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
-			{								
-				DBMoveToRawAlgebraicMove(m[n], buf);
-				strcpy(buf2, filename[ply]); strcat(buf2, buf);
-				sprintf (buf3,"<a href=\"%s-%d.html\"><b>%s</b></a>  Return Value: %d<br>\n",buf2,currentDepth, buf,value); 				
-				fprintf (fi[ply], buf3); 
-			}
-#endif	
+				if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
+				{								
+					DBMoveToRawAlgebraicMove(m[n], buf);
+					strcpy(buf2, filename[ply]); strcat(buf2, buf);
+					sprintf (buf3,"<a href=\"%s-%d.html\"><b>%s</b></a>  Return Value: %d<br>\n",buf2,currentDepth, buf,value); 				
+					fprintf (fi[ply], buf3); 
+				}
+	#endif	
 
 
 		}
@@ -1400,8 +1413,10 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 						fclose(fi[ply]); 
 					 }
 					 #endif   
-	  
-					return 0; }
+					// @georg testing needed
+					// the return value here should be irrelevant, because in the search on root level "stopThinking" is checked too
+					// and the tree currently searched is not used.
+					return -INFINITY; }
 
   if(AIBoard.isInCheck(AIBoard.getColorOffMove())) { 
 													#ifdef GAMETREE
@@ -1557,6 +1572,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
   else  
   {	  	 
 	 AIBoard.setCheckHistory(0);
+	 AIBoard.setBestCapture(); // this is probably not needed, since before this point orderCaptures has already been called. But just to be sure.
 	 
   	 if ((depth < ONE_PLY) || (ply>MAX_SEARCH_DEPTH)) 
 		{

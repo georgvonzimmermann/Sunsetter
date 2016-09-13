@@ -182,16 +182,20 @@ bitboard boardStruct::blockAttacks(color c, square where)
 
 bitboard boardStruct::uncoverAttacks(color c, square where)
    {
-   bitboard bb;
+   bitboard bb = (qword) 0;
+   
    square sq;
 
-   bb = blockedAttacks(c, where);
-   while (bb.hasBits()) 
-      {
-      sq = firstSquare(bb.data);
-      bb.unsetSquare(sq);
-      attacks[c][sq]++;
-      }
+   if (attacks[c][where])
+   {
+	   bb = blockedAttacks(c, where);
+	   while (bb.hasBits())
+	   {
+		   sq = firstSquare(bb.data);
+		   bb.unsetSquare(sq);
+		   attacks[c][sq]++;
+	   }
+   }
 
    return bb; 
    }
@@ -347,6 +351,22 @@ bitboard boardStruct::addPiece(color c, piece p, square sq, int hash, int attack
 
    return bb; 
    }
+
+
+/*
+* Function: setBestCapture
+* Input:    None.
+* Output:   None.
+* Purpose:  BestCaptureGain set to 0, else razoring is random as long
+*			 as capture moves are not ordered yet (hash move or node
+*           has no captures) .
+*/
+
+void boardStruct::setBestCapture()
+{
+	bestCaptureGain[moveNum] = 0;
+}
+
 
 
 /* 
@@ -957,7 +977,11 @@ move boardStruct::getMoveHistory (int ply)
 void boardStruct::makeNullMove()
    {
 		takeBackHistory[moveNum].oldep = enPassant;
+		takeBackHistory[moveNum].captured = NONE;
+		
+		addEnPassantHash(enPassant); // remove current ep square
 		enPassant = OFF_BOARD;
+		addEnPassantHash(enPassant); // add OFF_Board = after a null move ep can't be possible
 
 		onMove = OFF_MOVE;    
 		moveNum++;
@@ -978,9 +1002,11 @@ void boardStruct::unmakeNullMove()
 		
 		moveNum--;
 
-		onMove = OFF_MOVE; 	
-	
+		onMove = OFF_MOVE;
+		
+		addEnPassantHash(enPassant);	// remove the OFF_Board ep
 		enPassant = takeBackHistory[moveNum].oldep;
+		addEnPassantHash(enPassant);
    }
 
 

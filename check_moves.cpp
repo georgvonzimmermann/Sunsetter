@@ -139,6 +139,16 @@ int boardStruct::checkEvasionCaptures(move *m)
      possibleTo = attacksFrom(KING, kingSquare[onMove]) &
                            occupied[otherColor(onMove)];
 
+	 // white rook checks black king at g8 on back row, white knight on 
+	 // h8 can obviously not be taken. Check for that:
+	 /* This code from the chess version might be a speed improvement, needs testing.
+	 // remember to update below with "			&& (! bb.squareIsSet(sq)))" !!
+	 removeFromBitboards(onMove, KING, kingSquare[onMove]);
+	 bb = blockedAttacks(otherColor(onMove), kingSquare[onMove]);
+	 addToBitboards(onMove, KING, kingSquare[onMove]);
+	 */ 
+
+
      while (possibleTo.hasBits()) 
       {
       sq = firstSquare(possibleTo.data);
@@ -256,6 +266,15 @@ int boardStruct::checkEvasionOthers(move *m)
   
    possibleTo = attacksFrom(KING, kingSquare[onMove]) &
                    ~(occupied[onMove] | occupied[otherColor(onMove)]);
+
+   // white rook checks black king at g8 on back row, king 
+   // can not move to h8. Check for that:
+   /* Idea from chess-sunsetter (see above)
+
+   removeFromBitboards(onMove, KING, kingSquare[onMove]);
+   to = blockedAttacks(otherColor(onMove), kingSquare[onMove]);
+   addToBitboards(onMove, KING, kingSquare[onMove]);
+   */
 
    while (possibleTo.hasBits()) 
       {

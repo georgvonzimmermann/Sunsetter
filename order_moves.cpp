@@ -212,7 +212,7 @@ move *boardStruct::orderCaptures(move *m)
    {
    move tmpMove;
    int values[MAX_MOVES], done, count, tmpVal, i;
-   values[0] = 0; // needed for the case of 0 moves
+   values[0] = 0; // needed for the case of 0 capture moves
 
    for (count = 0; !m[count].isBad(); count++)
       {
@@ -230,7 +230,7 @@ move *boardStruct::orderCaptures(move *m)
       }
 
 
-
+   // @georg : make sure this isnt triggered when there are 2 moves, which are then not ordered ... 
    if (count < 2)
    {
 

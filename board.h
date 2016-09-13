@@ -470,7 +470,9 @@ struct boardStruct {
   void setDeepBugColor(color c);
   void setColorOnMove(color c);
   
-  void setCheckHistory(int check); 
+  void setCheckHistory(int check);
+  void setBestCapture();
+
   
   void copy(boardStruct *dest);        
 								/* Copies itself to another board,
