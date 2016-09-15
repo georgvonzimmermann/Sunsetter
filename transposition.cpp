@@ -578,7 +578,7 @@ void boardStruct::addEnPassantHash(square sq)
  */
 
 void boardStruct::store(int depthSearched, move bestMove,
-			int value, int alpha, int beta)
+			int value, int alpha, int beta, int ply)
 { 
   duword offset;
 
@@ -631,38 +631,33 @@ assert  (hashMoveCircle <= 7);
 
     if((value < beta) && (value > alpha))
 	{
-      lookupTable[onMove][offset].type = EXACT;
-     
-	  lookupTable[onMove][offset].value = sword (value);
-	  lookupTable[onMove][offset].depth = byte (depthSearched);
-	  lookupTable[onMove][offset].moveNr = byte (hashMoveCircle);
+		lookupTable[onMove][offset].type = EXACT;
     }
     else if(value >= beta) 
-	{      
-	  if(value >= MATE) 
-	  {
-		  lookupTable[onMove][offset].type = EXACT;
-		  depthSearched = MAX_SEARCH_DEPTH * ONE_PLY; 
-	  }
-	  else lookupTable[onMove][offset].type = FAIL_HIGH;
-
-	  lookupTable[onMove][offset].value = sword (value);
-	  lookupTable[onMove][offset].depth = byte (depthSearched);
-	  lookupTable[onMove][offset].moveNr = byte (hashMoveCircle);
+	{   
+		lookupTable[onMove][offset].type = FAIL_HIGH;
     } 
 	else if(value <= alpha) 
 	{            
-	  if(value <= -MATE) 
-	  {  
-		  lookupTable[onMove][offset].type = EXACT;
-		  depthSearched = MAX_SEARCH_DEPTH * ONE_PLY; 
-	  }
-	  else lookupTable[onMove][offset].type = FAIL_LOW;
-
-	  lookupTable[onMove][offset].value = sword (value);
-	  lookupTable[onMove][offset].depth = byte (depthSearched);
-	  lookupTable[onMove][offset].moveNr = byte (hashMoveCircle);
+		lookupTable[onMove][offset].type = FAIL_LOW;
     } 
+
+	// mates adjustment
+
+	if (value <= -MATE)
+	{
+		value -= ply;
+	}
+
+	else if (value >= MATE)
+	{
+		value += ply;
+	}
+
+	
+	lookupTable[onMove][offset].value = sword (value);
+	lookupTable[onMove][offset].depth = byte (depthSearched);
+	lookupTable[onMove][offset].moveNr = byte (hashMoveCircle);
 
 	if(!bestMove.isBad()) 
 	{

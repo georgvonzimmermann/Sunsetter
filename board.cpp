@@ -558,11 +558,16 @@ void boardStruct::setDeepBugColor(color c)
 
 void boardStruct::setColorOnMove(color c)
    {
-   onMove = c;
-  
-   /* After changing the color to move there isn't any chance of en passant */
+	// is it not already that color to move ? Then dont clear the en passant square !
+	if (onMove != c)
+	{
 
-   enPassant = OFF_BOARD;
+		onMove = c;
+
+		/* After changing the color to move there isn't any chance of en passant */
+
+		enPassant = OFF_BOARD;
+	}
    }
 
 /*
@@ -1956,7 +1961,10 @@ qword boardStruct::getHashValue()
    {
    return hashValue;
    }
-   
+#endif
+
+#ifndef NDEBUG
+
 /* Function: showDebugInfo
  * Input:    None
  * Output:   None.
@@ -2008,9 +2016,9 @@ void boardStruct::showDebugInfo()
    output("\n");
    }
 
- #endif
+ 
 
- #ifndef NDEBUG
+ 
 /*
  * Function: stopIfBad
  * Input:    None

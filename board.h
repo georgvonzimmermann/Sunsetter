@@ -457,7 +457,7 @@ struct boardStruct {
   int development;              /* The relative delelopment */
 
   public:                       /* Primitives to access the variables */
- 	  
+
   /* Some primitives to change the board */
 
   bool custom; // niklasf
@@ -623,7 +623,7 @@ struct boardStruct {
   int badMove(move m);				 /* True if a move is bad (not just illegal)*/
  #endif
   /* Other primitives */
- #ifdef DEBUG_STATS
+ #ifndef NDEBUG
   void showDebugInfo();               /* Prints debuging information to the
 									  screen. */
 
@@ -631,7 +631,7 @@ struct boardStruct {
 
 
   void store(int depthSearched, move bestMove,	/* Stores a position in the */
-        int value, int alpha, int beta);		/* transposition tables */
+        int value, int alpha, int beta, int ply);		/* transposition tables */
 
   transpositionEntry *lookup();                 /* Attempts to look up the
 												position from the 

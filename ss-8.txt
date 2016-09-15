@@ -1,0 +1,24 @@
+> 
+
+            ^^                   @@@@@@@@@
+       ^^       ^^            @@@@@@@@@@@@@@@
+                            @@@@@@@@@@@@@@@@@@              ^^
+                           @@@@@@@@@@@@@@@@@@@@
+                           @@@@@@@@@@@@@@@@@@@@
+ ~         ~~   ~  ~       ~~~~~~~~~~~~~~~~~~~~ ~       ~~     ~~ ~
+   ~      ~~      ~~ ~~ ~~  ~~~~~~~~~~~~~ ~~~~  ~     ~~~    ~ ~~~  ~ ~~
+   ~  ~~     ~         ~      ~~~~~~  ~~ ~~~       ~~ ~ ~~  ~~ ~
+
+ Sunsetter 8 
+ (c) Ben Dean-Kawamura, Georg v. Zimmermann
+ See http://sunsetter.sourceforge.net/ for more info.
+
+> Created 16777216 byte transposition table and 4194304 byte learn table.
+
+> tellics kibitz Hello from Sunsetter 8 
+> 7 -29995 5 5016 P@c7 c8c7 c6c7 R@d7 c7c6 P@b7 c6b5 P@c6  #5
+> 8 -29995 14 17260 P@c7 c8c7 c6c7 R@d7 c7c6 P@b7 c6b5 P@c6  #5
+> 9 -29995 66 91611 P@c7 c8c7 c6c7 R@d7 c7c6 P@b7 c6b5 P@c6  #5
+> 10 -29995 246 349788 P@c7 c8c7 c6c7 R@d7 c7c6 P@b7 c6b5 P@c6  #5
+> 11 -29995 806 1281531 P@c7 c8c7 c6c7 R@d7 c7c6 P@b7 c6b5 P@c6  #5
+> 12 -29995 4206 6912636 P@c7 c8c7 c6c7 R@d7 c7c6 P@b7 c6b5 P@c6  #5

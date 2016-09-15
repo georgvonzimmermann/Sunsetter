@@ -120,8 +120,6 @@ assert ( pv.depth[ply] <= DEPTH_LIMIT );
 * Input:    The board that the principal variation is from, the depth searched and the value.
 * Output:   None.
 * Purpose:  Used to print out information about the principal variation.
-* TODO designed to be called once per ply, which actually doesn't happen unless
-* the first move searched is the best move each ply, so needs some work done
 */
 
 static void printPrincipalVar(int valueReached)
@@ -130,14 +128,47 @@ static void printPrincipalVar(int valueReached)
 	int variationLength = 0;
 	char buf[MAX_STRING], emoticon[MAX_STRING];
 	char pvtxt[MAX_STRING];
-
+	char matetxt[MAX_STRING];
 
 	timeUsed = (getSysMilliSecs() - startClockTime) / 10; // time in centiseconds 
 	if ((timeUsed < 2) && !analyzeMode) return;
+	
+	// translate mate values to xboard standard
+	/*
+	if (valueReached > MATE)
+	{
+		valueReached -= MATE_IN_ONE;
+		valueReached *=2;
+		valueReached += 32766;
+	}
+
+	if (valueReached < -MATE)
+	{
+		valueReached += MATE_IN_ONE;
+		valueReached *=2;
+		valueReached -= 32768;
+	}
+	*/
+
+
+
 	if ((gameBoard.getColorOnMove() == BLACK) && analyzeMode)
 		valueReached = -valueReached; // kinda a kludge, but it works
 
 	strcpy(pvtxt, "");
+	strcpy(matetxt, "");
+
+	if (valueReached > MATE)
+	{
+		sprintf(matetxt, " #%d", (valueReached - MATE_IN_ONE) );
+	}
+
+	if (valueReached < -MATE)
+	{
+		sprintf(matetxt, " #%d", (valueReached + MATE_IN_ONE) );
+	}
+
+
 
 	for (n = 0; n < pv.depth[0]; n++)
 	{
@@ -147,11 +178,13 @@ static void printPrincipalVar(int valueReached)
 
 		DBMoveToRawAlgebraicMove(pv.moves[0][n], buf);
 		strcat(pvtxt, buf); strcat(pvtxt, " ");
+		/*
 		if (variationLength == 9)
 		{
 			strcat(pvtxt, " ..");
 			break;
 		}
+		*/
 	}
 
 	if (!xboardMode) 
@@ -164,7 +197,7 @@ static void printPrincipalVar(int valueReached)
 			strcat(pvtxt, "     ");
 		}
 
-		output(buf); output(pvtxt);
+		output(buf); output(pvtxt); output(matetxt);
 
 		if ((analyzeMode) && (timeUsed <20)) output("\r");
 		else output("\n");
@@ -176,7 +209,7 @@ static void printPrincipalVar(int valueReached)
 			sprintf(buf, "%d %d %d %d ",
 				currentDepth, valueReached,
 				timeUsed, stats_positionsSearched);
-			output(buf); output(pvtxt); output("\n");
+			output(buf); output(pvtxt); output(matetxt); output("\n");
 		}
 	}
 
@@ -318,7 +351,6 @@ int searchFirstMove(move m, int depth, int guess)
 {
   int learnValue; 
   int alpha, beta, value;
-
 
   alpha = guess ;
   beta = guess +1;
@@ -536,8 +568,10 @@ void searchRoot(int depth, move *rightMove, int *bestValue )
 
   *bestValue = -INFINITY;
   bestValueEver = -INFINITY; 
-  values[1] = -INFINITY; 
+  values[1] = -INFINITY;
+
   bestMoveLastPly.makeBad();
+  
   searchedFirstMove = 0; 
   startDepth = 1;
 
@@ -571,15 +605,18 @@ void searchRoot(int depth, move *rightMove, int *bestValue )
     if(te->type == EXACT && !te->hashMove.isBad()) {
    	  *rightMove = te->hashMove;
 	  bestMoveLastPly = *rightMove;
-      *bestValue = te->value;
+      *bestValue = te->value;  // no adjustment for mate values needed, because this is ply 0.
 	  value = *bestValue; 
 	  pv.depth[0] = 0; pv.depth[1] = 0;
       n = 0;
-      while(searchMoves[0][n] != te->hashMove) n++;
+	  
+	  // these 4 lines sort the hash move to the top of moves to search
+	  while(searchMoves[0][n] != te->hashMove) n++;
       tmp = searchMoves[0][n];
       searchMoves[0][n] = searchMoves[0][0];
       searchMoves[0][0] = tmp;
-      searchedFirstMove = 1;  
+      
+	  searchedFirstMove = 1;  
       startDepth = (te->depth / ONE_PLY) +1;
 
 assert (n <= count); // this checks that the hash move we 
@@ -596,14 +633,14 @@ assert (n <= count); // this checks that the hash move we
     }
   } 
   
+
   /* this is an easy and nice repetition detection :) 
    * the current position is stored into the hash with how much we'd like a draw (not very much if we higher rated than opp) and a  depth so big it 
    * will never be overwritten
    */
-
   tmp.makeBad(); 
-  
-  if (!analyzeMode) AIBoard.store(MAX_SEARCH_DEPTH, tmp, -ratingDiff, -INFINITY, +INFINITY);
+  // commented out for now, needs further testing (or use version from chess sunsetter) @georg
+  // if (!analyzeMode) AIBoard.store(MAX_SEARCH_DEPTH, tmp, -ratingDiff, -INFINITY, +INFINITY);
 
   calcTimeToSpend();
 
@@ -715,6 +752,9 @@ assert (n <= count); // this checks that the hash move we
 			savePrincipalVar(*rightMove, 1);
 			printPrincipalVar(*bestValue);	  
 	  }
+	  // use this to print a variation for each move tried.
+	  // savePrincipalVar(searchMoves[0][movesSearched], 1);
+	  // printPrincipalVar(value);	  
 
 	  // we are out of time, but the last move from searchMoves() 
 	  // is already failing high. Play that even though we dont know 
@@ -742,7 +782,7 @@ assert (n <= count); // this checks that the hash move we
       }
     } while(!done);
 
-  if (((*bestValue > MATE) || (*bestValue < -MATE) || (values[1] < -MATE_IN_ONE + 30)) && (!analyzeMode)) stopThought();
+  if (((*bestValue > MATE) || (*bestValue < -MATE) || (values[1] < -MATE_IN_ONE + 3)) && (!analyzeMode)) stopThought();
 
   // if we mate, are mated or have only 1 move to escape a short mate, then move now in zh.
 
@@ -1343,6 +1383,7 @@ int search(int alpha, int beta, int depth, int ply, int wasNullMove)
   int orgBeta, orgAlpha;	//  set to alpha and beta since those will be adjusted 
   int extensions = -ONE_PLY; 
   int bestValue = -INFINITY; 
+  int HashValue;
   int NullValue;            //  NullValue of the position 
   int Currenteval;          //  Current Static evaluation      
 
@@ -1437,8 +1478,6 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
   orgBeta = beta;
   
 
-
-
   if ((te = AIBoard.lookup()) != NULL) 
   
   { 
@@ -1464,18 +1503,29 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
        time we return the value, otherwise we set beta to the value returned
        since we know we can't get better then that. */
 
-    if(te->depth >= depth) {
-		if(te->type == EXACT) { 
+    if(te->depth >= depth) 
+	{
+		HashValue = te->value;
+
+		if (HashValue >= MATE)
+			HashValue -= ply;
+		else if (HashValue <= -MATE)
+			HashValue += ply;
+
+		if(te->type == EXACT) 
+		{ 
 								#ifdef GAMETREE
 								if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
 									{
-									fprintf(fi[ply],"<br><br>Return: exact hash value: %d<br></td></tr></table></html>\n", te->value );
+									fprintf(fi[ply],"<br><br>Return: exact hash value: %d<br></td></tr></table></html>\n", HashValue);
 									fclose(fi[ply]); }
 								#endif 
 
-								return te->value; }
-      else if(te->type == FAIL_HIGH) {
-			if(beta <= te->value) { 
+								return HashValue;
+		}
+      else if(te->type == FAIL_HIGH) 
+	  {
+			if(beta <= HashValue) {
 								  #ifdef GAMETREE
 									if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
 									{	
@@ -1483,13 +1533,16 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 									fclose(fi[ply]); }
 								  #endif
 
-								  return te->value; }
-			if(te->value > alpha)		{
-										bestValue = alpha = te->value;				
-										}
+								  return HashValue; }
+			if(HashValue > alpha)		
+			{
+				bestValue = alpha = HashValue;
+			}
 									}
-      else if(te->type == FAIL_LOW) {
-			if(te->value <= alpha) { 
+			else if(te->type == FAIL_LOW) 
+			{
+				if(HashValue <= alpha) 
+				{
 								   #ifdef GAMETREE
 										if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
 										{
@@ -1497,12 +1550,14 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 										fclose(fi[ply]);  }
 								   #endif 
 
-								   return te->value; }
-			if(beta > te->value)		{
-										beta = te->value;
-										}	
-									}
-    }
+					return HashValue;
+				}
+				if(beta > HashValue)		
+				{
+					beta = HashValue;
+				}	
+			}
+		}
 
 
   /* If we had remembered this position from before then try to 
@@ -1592,7 +1647,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 		bestValue = quiesce(alpha, beta, ply); 
 
 		
-		AIBoard.store(ONE_PLY-1, bestMove, bestValue, orgAlpha, orgBeta);
+		AIBoard.store(ONE_PLY-1, bestMove, bestValue, orgAlpha, orgBeta, ply);
 
 		return bestValue; 
 		
@@ -1645,7 +1700,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 			stats_NullCuts[depth/ONE_PLY]++;		
 			#endif
 			
-			AIBoard.store((max (depth, 0)), bestMove, NullValue, orgAlpha, orgBeta);
+			AIBoard.store((max (depth, 0)), bestMove, NullValue, orgAlpha, orgBeta, ply);
 
 			return NullValue;
 
@@ -1701,7 +1756,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 					fclose(fi[ply]); }
 					#endif
 
-					AIBoard.store((max (depth, 0)), bestMove, bestValue, orgAlpha, orgBeta);
+					AIBoard.store((max (depth, 0)), bestMove, bestValue, orgAlpha, orgBeta, ply);
 										
 
 					return bestValue; 
@@ -1740,24 +1795,25 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 	 
 	 // None of the moves were legal.  See if it's checkmate or the person has to sit 
     
-     // there are updated versions of the below code here
-	 // https://github.com/isaacl/sunsetter/commit/c4b0bc55f67b1945c43859048eb38b92378b0ba5 
-	 // I havn't had the time to test those changes (Georg)
 
-	 if (currentRules == CRAZYHOUSE || AIBoard.cantBlock()) 
+	 if (currentRules == CRAZYHOUSE)  
 	 {
-		bestValue = -MATE_IN_ONE + AIBoard.bughouseMateEval();		
+		// bestValue = -MATE_IN_ONE + AIBoard.bughouseMateEval();
+		 bestValue = -MATE_IN_ONE + ply / 2 + 1;
      } 
-	 else
+	 else // current rules = bughouse
 	 {
-		bestValue = -ALMOST_MATE;
+		 if (AIBoard.cantBlock())
+		 {
+			 bestValue = -MATE_IN_ONE + AIBoard.bughouseMateEval();
+		 }
+		 else
+		 {
+			 bestValue = -ALMOST_MATE;
+		 }
 	 }
   }
  
-	
-  if (bestValue <= -MATE) bestValue += 10; 
-  
-  // We got mated add to the score to because the mate is one ply deeper than when we assigened it that score 
 
 
   /* Now that the seach is over, save information to transposition tables */
@@ -1766,7 +1822,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
   if (!stopThinking)
   {
 	
-	AIBoard.store((max (depth, 0)), bestMove, bestValue, orgAlpha, orgBeta);	
+	AIBoard.store((max (depth, 0)), bestMove, bestValue, orgAlpha, orgBeta, ply);	
 
 	if (! bestMove.isBad())
 	{
