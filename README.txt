@@ -50,9 +50,5 @@ Maybe like this:
 #define __forceinline inline
 #endif
 
-3) 
-typedef int socklen_t;
-// one some systems this might not work, then try without the typedef
-
 
 Please test as I am only familiar with MSVC. Thanks!
