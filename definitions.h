@@ -41,9 +41,6 @@ typedef signed int sdword;
 
 #endif
 
-typedef int socklen_t;
-// one some systems this might not work, then try without the typedef
-
 #ifndef _win32_
 	#define qword(target) (unsigned long long)(target##ULL)
 #endif

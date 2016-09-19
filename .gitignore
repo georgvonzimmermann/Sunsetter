@@ -248,3 +248,8 @@ ModelManifest.xml
 .fake/
 /ss-8.ini
 /testsuit.fen
+
+# Linux
+.depend
+*.o
+sunsetter
