@@ -228,12 +228,6 @@ void findZHGame()
  * Purpose:  It's the head honcho of the Sunsetter.  It does the initialization
  *           then it runs the game loop.
  */
-
-#ifdef __EMSCRIPTEN__
-// code by niklasf,therefore I put it inside __EMSCRIPTEN__  @niklasf: what is this doing? 
-void mainLoop(void *);
-#endif  // #ifdef __EMSCRIPTEN__
-
 int main(int argc, char **argv)
 {
   move m;
