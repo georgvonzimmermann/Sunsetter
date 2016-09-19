@@ -278,6 +278,13 @@ int firstSquare(qword a)
 		: "cc");
 	return (int)res;
 }
+#elif defined(__GNUC__)
+inline
+int firstSquare(qword a)
+{
+    assert(a != 0);
+    return __builtin_ctzll(a);
+}
 #else
 #error not a supported architecture
  // If someone wants to support non-intel architectures, there are some (slower) C versions
