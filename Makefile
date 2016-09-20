@@ -1,9 +1,9 @@
 # Makefile to build sunsetter for linux.
 
 EXE = sunsetter
-CXX = clang
 
-CFLAGS = -O3 -DNDEBUG
+CXXFLAGS = -O3 -DNDEBUG
+LDFLAGS = -O3
 
 OBJECTS = aimoves.o bitboard.o board.o bughouse.o evaluate.o moves.o search.o capture_moves.o check_moves.o interface.o notation.o order_moves.o partner.o quiescense.o tests.o transposition.o validate.o
 
