@@ -11,14 +11,13 @@
  *************************************************************************** */
 
 /* Development tables are how Sunsetter measures development.  The piece is
-   assigned the value of the square it's on.  So a pawn on the seventh rank
-   gets +6 and white knight on g1 gets -5.  Like the other evaluation, they're
+   assigned the value of the square it's on.  Like the other evaluation, they're
    measuerd in centipawns.  These are done so that they are from white's
    perspective.  The bottom row is for the first rank and the left column is
    for the a file.  */
 
 int pawnDevelopmentTable[64] = {   0,  0,  0,  0,  0,  0,  0,  0,
-                                   3,  4,  3,  3,  3,  3,  4,  3,
+                                   5,  6,  5,  5,  5,  5,  6,  5,
                                    0,  0,  0,  3,  3,  0,  0,  0,
                                    0,  0,  0,  3,  3,  0,  0,  0,
                                   -2, -1,  0,  2,  2,  0, -1, -2,
@@ -26,14 +25,14 @@ int pawnDevelopmentTable[64] = {   0,  0,  0,  0,  0,  0,  0,  0,
                                    4,  6,  2, -4, -6,  4,  8,  4,
                                    0,  0,  0,  0,  0,  0,  0,  0 };
 
-int rookDevelopmentTable[64]   = { 0,  0,  0,  0,  0,  0,  0,  0,
+int rookDevelopmentTable[64]   = { 5,  5,  5,  5,  5,  5,  5,  5,
                                    0,  0,  0,  0,  0,  0,  0,  0,
                                    0,  0,  0,  0,  0,  0,  0,  0,
                                    0,  0,  0,  0,  0,  0,  0,  0,
                                    0,  0,  0,  0,  0,  0,  0,  0,
                                    0,  0,  0,  0,  0,  0,  0,  0,
                                    0,  0,  0,  0,  0,  0,  0,  0,
-                                   0,  0,  0,  0,  0,  0,  0,  0 };
+                                   1,  0,  0,  0,  0,  0,  0,  1 };
 
 int knightDevelopmentTable[64] ={  0,  0,  0,  0,  0,  0,  0,  0,
                                    0,  0,  0,  0,  0,  0,  0,  0,

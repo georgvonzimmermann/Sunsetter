@@ -381,7 +381,7 @@ void initBitboards()
    int leftborder, rightborder, upperborder, lowerborder; 
    int n, o, i;
    bitboard bb, bb2;
-   square sq;
+   square sq, sq2;
 
 
    /* First generate the Square -> Bitboard with only that square set 
@@ -722,17 +722,23 @@ void initBitboards()
    /* Set up the near squares, these are squares that are no more than two
       squares away */
   
-   for (sq = 0; sq < SQUARES; sq++) 
-   {
-		nearSquares[sq][WHITE] = (qword) 0;
-		nearSquares[sq][WHITE] |= kingAttacks[sq];
-		if (sq + ONE_RANK < SQUARES) nearSquares[sq][WHITE] |= kingAttacks[sq+ONE_RANK];
-      
-		nearSquares[sq][BLACK] = (qword) 0;
-		nearSquares[sq][BLACK] |= kingAttacks[sq];
-		if (sq - ONE_RANK >= 0) nearSquares[sq][BLACK] |= kingAttacks[sq-ONE_RANK];
+  for (sq = 0; sq < SQUARES; sq++)
+  {
+	  // in this implementation WHITE and BLACK is the same, could be just one array (TODO).
+	  nearSquares[sq][WHITE] = (qword)0;
+	  nearSquares[sq][BLACK] = (qword)0;
 
-   }
+	  bb = kingAttacks[sq];
+
+	  while (bb.hasBits())
+	  {
+		  sq2 = firstSquare(bb.data);
+		  bb.unsetSquare(sq2);
+
+		  nearSquares[sq][BLACK] |= kingAttacks[sq2];
+		  nearSquares[sq][WHITE] |= kingAttacks[sq2];
+	  }
+  }
 
    return;
    }

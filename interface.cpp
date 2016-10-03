@@ -575,6 +575,7 @@ void parseHolding(const char *str)
 
 void parseOption(const char *str)
    {
+
    int n; 
    move m;
    char tmp[MAX_STRING], buf[MAX_STRING], arg[MAX_ARG][MAX_STRING];
@@ -625,7 +626,8 @@ void parseOption(const char *str)
 		// Tell xboard which modern features we support.  short list so far.
 		// Remember that "string" features must be quoted even when they do
 		// not have any spaces in them.
-		output("feature ping=0 draw=0 sigint=0 setboard=1 analyze=1 memory=1 myname=\"Sunsetter\" variants=\"crazyhouse,bughouse\" done=1\n");
+		sprintf(buf, "feature ping=0 draw=0 sigint=0 setboard=1 analyze=1 memory=1 myname=\"Sunsetter%s%d%d\" variants=\"crazyhouse,bughouse\" done=1\n", VERSION, paramA, paramB);
+		output(buf);
 	}
 
 	else if (!strcmp(arg[0], "learn")) 
@@ -899,6 +901,16 @@ output ("//D: variant parsed, board reset and set to bug or zh \n");
    
    else if(!strcmp(arg[0], "defactor"))
 	  { DE_FACTOR = atoi(arg[1]);}	
+
+   else if (!strcmp(arg[0], "paramA"))
+   {
+	   paramA = atoi(arg[1]);
+   }
+
+   else if (!strcmp(arg[0], "paramB"))
+   {
+	   paramB = atoi(arg[1]);
+   }
    
    else if(!strcmp(arg[0], "time"))
       gameBoard.setTime(gameBoard.getDeepBugColor(), atoi(arg[1]) *10);
@@ -995,6 +1007,10 @@ output ("//D: variant parsed, board reset and set to bug or zh \n");
 
 	   gameInProgress = 1;
 	   soughtGame = 0;
+
+#ifndef NDEBUG
+	   gameBoard.showDebugInfo();
+#endif
 
 	   if (analyzeMode) gameBoard.setDeepBugColor(gameBoard.getColorOnMove());
    }

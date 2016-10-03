@@ -591,6 +591,7 @@ struct boardStruct {
   int eval();                  /* eval() evaluates the position and
 								 returns the value */
 
+  int adjustInHand();
 
   int bughouseSitForEval();		/* Malus in Bughouse if we'd have to sit for a piece */
   int bughouseMateEval();		/* see above, for mates */ 

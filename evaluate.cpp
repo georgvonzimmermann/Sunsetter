@@ -25,6 +25,7 @@
 
 int DevelopmentTable[COLORS][PIECES][SQUARES];
 
+int escapeValues[32] = { 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
 
 /* Function: boardControlEval
  * Input:    None.
@@ -35,17 +36,21 @@ int DevelopmentTable[COLORS][PIECES][SQUARES];
 int boardStruct::boardControlEval()
 {
 
+	// Testing shows starting from B1 instead of C1 is clearly better (= changed)
+	// Testing shows BC_FACTOR of 5 is clearly better than i.e. 3 (= unchanged)
+	// Testing shows counting 2nd row twice is clearly worse (= unchanged)
+
 	int control = 0;
 	square sq; 
 
-	for(sq = C1; sq <= G8; sq++) 
+	for (sq = B1; sq <= G8; sq++)
+
+		{
+			control += ((attacks[WHITE][sq] - attacks[BLACK][sq]));
+		}
+
+	return (control * BC_FACTOR);
 	
-	{
-		control +=  ((attacks[WHITE][sq] - attacks[BLACK][sq])); 
-	}
-
-
-return (control * BC_FACTOR);
 
 }
 
@@ -63,35 +68,46 @@ int boardStruct::kingSafetyEval(color c)
 
 	int sqcontrol;
 	square sq; 
-	bitboard nearKing = nearSquares[kingSquare[c]][c];  
+	bitboard nearKing;
 
+	nearKing = nearSquares[kingSquare[c]][c];
 
 	while (nearKing.hasBits())
-		{					
-			
-			sq = firstSquare(nearKing.data);
-			nearKing.unsetSquare(sq);  
+	{
+		sq = firstSquare(nearKing.data);
+		nearKing.unsetSquare(sq);
 
-			sqcontrol = attacks[otherColor(c)][sq] - attacks[c][sq]; 
-		
-			// Squares we attack more then opp near opps king (excluding his king)
-			// or that are empty and as often defended as attacked  
+		sqcontrol = attacks[otherColor(c)][sq] - attacks[c][sq];
 
-			if ((position[sq] == NONE) && (sqcontrol > -1) ) takeSquares += ( sqcontrol + 2) + takeSquares / 4;
-			else if (sqcontrol > -1) takeSquares += ( sqcontrol + 1) + takeSquares / 4;
-			else if ((sqcontrol == -1) && (position[sq] == NONE) && (DevelopmentTable[c][KING][sq] + 10 < DevelopmentTable[c][KING][kingSquare[c]]))
-				takeSquares += ( sqcontrol + 2) + takeSquares / 4;
-			
-			// Bonus for escape squares near our own king 
-			// squares that are defended by us and not attacked by opp	
-			
-			if ((!attacks[otherColor(c)][sq]) && (attacks[c][sq] > 1) && (position[sq] == NONE)) escapeSquares+= attacks[c][sq]; 
-			// 2 for a normal one, 3 for a better protected one, 4 will be seldom
-			
+
+		// Squares we attack at least as much as opp near opps king (dont forget opps king!)
+		// Tuning: this version is at least 30 elo points better than version 8
+		// I also tried "+= sqcontrol + 10" or "+= sqcontrol + sqcontrol + 7"
+		// but this (with lower values) is better
+
+		if (sqcontrol > -1)
+		{
+			takeSquares += sqcontrol + sqcontrol + 5;
 		}
 
+		// Bonus for escape squares near our own king 
+		// squares that are not attacked by opp	
+		// This doesnt convince me but all testing shows it is better with than without:
 
-	return ((max (0, takeSquares - escapeSquares)) * NK_FACTOR);
+		if ((!attacks[otherColor(c)][sq]))
+		{
+			escapeSquares += escapeValues[attacks[c][sq]];
+		}
+	}
+
+	// this ensures that there is always a positive effect of attacking near-king squares even if 
+	// we attack so few squares that the escape-Squares are overwhelming.
+	// Tuning shows it works clearly better than without
+	
+	if (escapeSquares > takeSquares /2) escapeSquares = takeSquares / 2;
+
+
+	return (max(0, takeSquares - escapeSquares));
 	
 	// positive return value is bad for the side we are doing KS for
 
@@ -179,6 +195,39 @@ int boardStruct::getPieceDevOnSquare(color c, square sq, piece p)
 
 #endif  // GAMETREE
 
+int boardStruct::adjustInHand()
+
+{
+	// TODO: for speeding up the eval this could be put into the development variable on movegen
+
+	int mAjustment = 0;
+
+		// WHITE
+		if (hand[WHITE][PAWN])
+			mAjustment += 15 + hand[WHITE][PAWN] * 7;
+		if (hand[WHITE][QUEEN])
+			mAjustment += 40 + hand[WHITE][QUEEN] * 20;
+		if (hand[WHITE][ROOK])
+			mAjustment += 20 + hand[WHITE][ROOK] * 10;
+		if (hand[WHITE][KNIGHT])
+			mAjustment += 20 + hand[WHITE][KNIGHT] * 10;
+		if (hand[WHITE][BISHOP])
+			mAjustment += 20 + hand[WHITE][BISHOP] * 10;
+
+		// BLACK
+		if (hand[BLACK][PAWN])
+			mAjustment -= 15 + hand[BLACK][PAWN] * 7;
+		if (hand[BLACK][QUEEN])
+			mAjustment -= 40 + hand[BLACK][QUEEN] * 20;
+		if (hand[BLACK][ROOK])
+			mAjustment -= 20 + hand[BLACK][ROOK] * 10;
+		if (hand[BLACK][KNIGHT])
+			mAjustment -= 20 + hand[BLACK][KNIGHT] * 10;
+		if (hand[BLACK][BISHOP])
+			mAjustment -= 20 + hand[BLACK][BISHOP] * 10;
+
+		return mAjustment; 
+}
 
 /* Function: eval
  * Input:    None.
@@ -192,11 +241,11 @@ int boardStruct::eval()
 
   if (onMove == WHITE) // it is whites turn NOW. 
   {
-    return( material   +  development + boardControlEval() - kingSafetyEval(WHITE) * getMaterialInHand(BLACK)+ kingSafetyEval(BLACK) * getMaterialInHand(WHITE) + bughouseSitForEval());
+    return( adjustInHand() + material   +  development + boardControlEval() - kingSafetyEval(WHITE) * getMaterialInHand(BLACK)+ kingSafetyEval(BLACK) * getMaterialInHand(WHITE) + bughouseSitForEval());
   }
   else // blacks turn
   { 
-    return( -( material + development  + boardControlEval() - kingSafetyEval(WHITE) * getMaterialInHand(BLACK)+ kingSafetyEval(BLACK) * getMaterialInHand(WHITE)+ bughouseSitForEval()));
+	  return(-(adjustInHand() +  material + development + boardControlEval() - kingSafetyEval(WHITE) * getMaterialInHand(BLACK) + kingSafetyEval(BLACK) * getMaterialInHand(WHITE) + bughouseSitForEval()));
   }
 
  
@@ -269,10 +318,20 @@ for (p=FIRST_PIECE; p <= LAST_PIECE; p = (piece)(p + 1) )
 	mInHand+= (pValue[p]* hand[c][p]);
 }
 
-mInHand /= 80;
-mInHand += 2; 
+	int calcReturn = 2;
 
-return min(12, mInHand );
+	if (mInHand > 80) calcReturn++;
+	if (mInHand > 160) calcReturn++;  // +80
+	if (mInHand > 260) calcReturn++;  // +100
+	if (mInHand > 380) calcReturn++;  // +120
+	if (mInHand > 530) calcReturn++;  // +150
+	if (mInHand > 720) calcReturn++;  // +190
+	if (mInHand > 960) calcReturn++;  // +240
+	if (mInHand > 1260) calcReturn++;  // +300
+	if (mInHand > 1630) calcReturn++;  // +370
+
+	return (calcReturn);
+
 
 }
 
@@ -376,13 +435,17 @@ int boardStruct::escapingAttack(square movedFrom, square moveTo)
 int boardStruct::captureExtensionCondition() 
 {
 	assert(moveNum > 1); 
-
+	
+	/*
+	if (moveHistory[moveNum - 2].to() == moveHistory[moveNum - 1].to())
+		return 1;
+	*/
 	if (	(takeBackHistory[moveNum-1].captured != NONE) && 
 			(moveHistory[moveNum-2].to() == moveHistory[moveNum-1].to())  &&
 			( (! attacks[OFF_MOVE][moveHistory[moveNum-1].to()]) ||
 			(checkHistory[moveNum-1] && takeBackHistory[moveNum-2].captured != NONE) ) ) 
 			 return 1;
-
+	
 
 	return 0;
 
@@ -428,22 +491,17 @@ for(sq = 0; sq < SQUARES; sq++)
     DevelopmentTable[BLACK][KING][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
       (kingDevelopmentTable[sq]*DE_FACTOR);
 		
-		
 	DevelopmentTable[BLACK][PAWN][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
-     (pawnDevelopmentTable[sq]* DE_FACTOR);
-
+	  (pawnDevelopmentTable[sq] * DE_FACTOR);
 
     DevelopmentTable[BLACK][BISHOP][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
       (bishopDevelopmentTable[sq]* DE_FACTOR);
 
-
-    DevelopmentTable[BLACK][ROOK][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
-      (rookDevelopmentTable[sq]* DE_FACTOR);
-
+	DevelopmentTable[BLACK][ROOK][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
+	  (rookDevelopmentTable[sq] * DE_FACTOR);
 
     DevelopmentTable[BLACK][KNIGHT][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
      (knightDevelopmentTable[sq]* DE_FACTOR);
-
 
     DevelopmentTable[BLACK][QUEEN][(sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
       (queenDevelopmentTable[sq]* DE_FACTOR);
@@ -454,15 +512,15 @@ for(sq = 0; sq < SQUARES; sq++)
 	DevelopmentTable[WHITE][KING][(7- sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE]=
       (kingDevelopmentTable[sq]*DE_FACTOR);
 
-	DevelopmentTable[WHITE][PAWN][(7- sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE]=
-      (pawnDevelopmentTable[sq]* DE_FACTOR);
+	DevelopmentTable[WHITE][PAWN][(7 - sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE] =
+	   (pawnDevelopmentTable[sq] * DE_FACTOR);
 
 	DevelopmentTable[WHITE][BISHOP][(7- sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE]=
       (bishopDevelopmentTable[sq]* DE_FACTOR);
-
+	
 	DevelopmentTable[WHITE][ROOK][(7- sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE]=
-      (rookDevelopmentTable[sq]* DE_FACTOR);
-
+	  (rookDevelopmentTable[sq]* DE_FACTOR);
+	
 	DevelopmentTable[WHITE][KNIGHT][(7- sq / 8) * ONE_RANK + (sq % 8) * ONE_FILE]=
      (knightDevelopmentTable[sq]* DE_FACTOR);
 

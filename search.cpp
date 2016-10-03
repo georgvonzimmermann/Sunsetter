@@ -54,7 +54,9 @@ int stats_transpositionHits;               /* # of success for transposition loo
 int stats_hashFillingUp; 
 int stats_hashSize;
 
-const int FractionalDeep [MAX_SEARCH_DEPTH+1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, ONE_PLY * 7, ONE_PLY * 8, ONE_PLY * 9, ONE_PLY * 10, ONE_PLY * 11, ONE_PLY * 12, ONE_PLY * 13, ONE_PLY * 14, ONE_PLY * 15, ONE_PLY * 16, ONE_PLY * 17, ONE_PLY * 18, ONE_PLY * 19, ONE_PLY * 20, ONE_PLY * 21, ONE_PLY * 22, ONE_PLY * 23, ONE_PLY * 24, ONE_PLY * 25, ONE_PLY * 26, ONE_PLY * 27, ONE_PLY * 28, ONE_PLY * 29, ONE_PLY * 30 };
+
+const int FractionalDeep[MAX_SEARCH_DEPTH + 1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72 };
+// const int FractionalDeep [MAX_SEARCH_DEPTH+1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, ONE_PLY * 7, ONE_PLY * 8, ONE_PLY * 9, ONE_PLY * 10, ONE_PLY * 11, ONE_PLY * 12, ONE_PLY * 13, ONE_PLY * 14, ONE_PLY * 15, ONE_PLY * 16, ONE_PLY * 17, ONE_PLY * 18, ONE_PLY * 19, ONE_PLY * 20, ONE_PLY * 21, ONE_PLY * 22, ONE_PLY * 23, ONE_PLY * 24, ONE_PLY * 25, ONE_PLY * 26, ONE_PLY * 27, ONE_PLY * 28, ONE_PLY * 29, ONE_PLY * 30 };
 		/* The implementation allows to experiment with fractional deepening, for example smaller steps at higher depths*/
 
 
@@ -128,7 +130,7 @@ static void printPrincipalVar(int valueReached)
 	int variationLength = 0;
 	char buf[MAX_STRING], emoticon[MAX_STRING];
 	char pvtxt[MAX_STRING];
-	char matetxt[MAX_STRING];
+	
 
 	timeUsed = (getSysMilliSecs() - startClockTime) / 10; // time in centiseconds 
 	if ((timeUsed < 2) && !analyzeMode) return;
@@ -150,25 +152,10 @@ static void printPrincipalVar(int valueReached)
 	}
 	*/
 
-
-
 	if ((gameBoard.getColorOnMove() == BLACK) && analyzeMode)
 		valueReached = -valueReached; // kinda a kludge, but it works
 
 	strcpy(pvtxt, "");
-	strcpy(matetxt, "");
-
-	if (valueReached > MATE)
-	{
-		sprintf(matetxt, " #%d", (valueReached - MATE_IN_ONE) );
-	}
-
-	if (valueReached < -MATE)
-	{
-		sprintf(matetxt, " #%d", (valueReached + MATE_IN_ONE) );
-	}
-
-
 
 	for (n = 0; n < pv.depth[0]; n++)
 	{
@@ -178,13 +165,6 @@ static void printPrincipalVar(int valueReached)
 
 		DBMoveToRawAlgebraicMove(pv.moves[0][n], buf);
 		strcat(pvtxt, buf); strcat(pvtxt, " ");
-		/*
-		if (variationLength == 9)
-		{
-			strcat(pvtxt, " ..");
-			break;
-		}
-		*/
 	}
 
 	if (!xboardMode) 
@@ -197,7 +177,7 @@ static void printPrincipalVar(int valueReached)
 			strcat(pvtxt, "     ");
 		}
 
-		output(buf); output(pvtxt); output(matetxt);
+		output(buf); output(pvtxt); output("\n");
 
 		if ((analyzeMode) && (timeUsed <20)) output("\r");
 		else output("\n");
@@ -209,7 +189,7 @@ static void printPrincipalVar(int valueReached)
 			sprintf(buf, "%d %d %d %d ",
 				currentDepth, valueReached,
 				timeUsed, stats_positionsSearched);
-			output(buf); output(pvtxt); output(matetxt); output("\n");
+			output(buf); output(pvtxt); output("\n");
 		}
 	}
 
@@ -274,61 +254,40 @@ void analyzeUpdate()
 
 void calcTimeToSpend()
 
- {
-
-
-int mytime, opptime;
-
-
-mytime = AIBoard.getTime(AIBoard.getDeepBugColor());
-opptime = AIBoard.getTime(otherColor(AIBoard.getDeepBugColor()));
-
-
-
-if ((FIXED_DEPTH) || (analyzeMode))
-
 {
-	millisecondsPerMove = 100000000; 
-	return; 
-}
 
-if (currentRules == BUGHOUSE) 
+	int mytime, opptime;
 
-{
-	if (opptime < mytime) mytime = opptime; // if opp is low on time, play fast too 
-											// he and my part may have sat 
-											// so maybe my part is low too 
-	millisecondsPerMove = ( initialTime / 360 ) + ( mytime / 360 ); 
-	if (mytime <= 20000) { millisecondsPerMove = mytime / 180; }
-	if (mytime <= 4000) { millisecondsPerMove = 40; }
-	if (mytime <= 800) { millisecondsPerMove = 5; }
-}
+	mytime = AIBoard.getTime(AIBoard.getDeepBugColor());
+	opptime = AIBoard.getTime(otherColor(AIBoard.getDeepBugColor()));
 
-else 
-{											   
-	millisecondsPerMove = ( initialTime / 80 ) + ( mytime / 80 ); 
-	if (mytime <= 20000) { millisecondsPerMove = mytime / 50; }
-	if (mytime <= 4000) { millisecondsPerMove = 100; }
-	if (mytime <= 800) { millisecondsPerMove = 20; }
+	if ((FIXED_DEPTH) || (analyzeMode))
 
-	
-	/*
-	 Removed code that makes it move twice as fast *in crazyhouse mode* if
-	 it's opponent has more time than it does.  This is most likely because
-     they are still in book, and moving faster will just lead to blunders.
-     Bughouse time management unchanged, still moves crazy fast there.
-	 -Angrim
-	*/
-
-	/*
-	if (mytime < opptime) 						// if our opp has more time 
-												// play faster 
 	{
-		millisecondsPerMove = millisecondsPerMove / 2; 
+		millisecondsPerMove = 100000000; 
+		return; 
 	}
-	*/
+
+	if (currentRules == BUGHOUSE) 
+
+	{
+		if (opptime < mytime) mytime = opptime; // if opp is low on time, play fast too 
+												// he and my part may have sat 
+												// so maybe my part is low too 
+		millisecondsPerMove = ( initialTime / 360 ) + ( mytime / 360 ); 
+		if (mytime <= 20000) { millisecondsPerMove = mytime / 180; }
+		if (mytime <= 4000) { millisecondsPerMove = 40; }
+		if (mytime <= 800) { millisecondsPerMove = 5; }
+	}
+
+	else 
+	{											   
+		millisecondsPerMove = ( mytime / 25 ); 
+		if (mytime <= 20000) { millisecondsPerMove = mytime / 40; }
+		if (mytime <= 4000) { millisecondsPerMove = 100; }
+		if (mytime <= 800) { millisecondsPerMove = 20; }
 	
-}
+	}
 
 }
 
@@ -716,23 +675,20 @@ assert (n <= count); // this checks that the hash move we
   savePrincipalVar(*rightMove, 1);    
   printPrincipalVar(*bestValue);
 
-  /* Basically a fail low of the first move searched, after going
-   * one ply deeper. We keep that move, but we allow some extra time
-   * to resolve our problem */
+  /* The following doesnt do what I thought it does, but it gives good results anyway */
   
   if ((currentRules == CRAZYHOUSE) 
-	  && ((value +80) < values[1]) 
-	  && (currentDepth > 3) 
-	  && (millisecondsPerMove * 4 < gameBoard.getTime(AIBoard.getColorOnMove())) )
+	  && ((value +40) < values[1]) 
+	  && (currentDepth > 7) 
+	  && (millisecondsPerMove * 8 < gameBoard.getTime(AIBoard.getColorOnMove())) )
   {
-	  millisecondsPerMove *= 2;
+	  millisecondsPerMove = (millisecondsPerMove /2) * 3;
   }   
-
+  
   while(movesSearched < (count-1)) 
   
   {	
 	  movesSearched++;
-	  
 	  
 	  value =  searchMove(searchMoves[0][movesSearched], FractionalDeep[currentDepth], *bestValue );	 	  
 	
@@ -1583,21 +1539,37 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
    * Last move was a capture of the piece that just moved and it was the only way to capture it
    */
   
-	if ((!wasNullMove) && (AIBoard.captureExtensionCondition()))
-				
-		{ 
-			extensions += CAPTURE_EXTENSION; 
-			
-			#ifdef DEBUG_STATS
-			stats_capext+= CAPTURE_EXTENSION; 
-			#endif
+	if (!wasNullMove)
+	{
+		if (AIBoard.captureExtensionCondition())
 
-			#ifdef GAMETREE
-			if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
-			{ fprintf(fi[ply],"Capture extension: depth+ %d<br>\n", CAPTURE_EXTENSION); }
-			#endif	 
+		{
+			extensions += CAPTURE_EXTENSION;
+		/*
+		// Tried the following 2 versions, both worse (= unchanged)
+
+		if (depth >= (FractionalDeep[currentDepth] ) - (ONE_PLY *2))
+		{
+			extensions += 4;
 		}
-  
+	
+		if (ply < currentDepth / 2)
+		    extensions += 2;
+		*/
+
+#ifdef DEBUG_STATS
+		stats_capext += CAPTURE_EXTENSION;
+#endif
+
+#ifdef GAMETREE
+		if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1))
+		{
+			fprintf(fi[ply], "Capture extension: depth+ %d<br>\n", CAPTURE_EXTENSION);
+		}
+#endif	 
+		}
+
+	}
 
   /* In check.  */
 
@@ -1605,11 +1577,20 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
   {   
 	AIBoard.setCheckHistory(1);
 
-
-	if (ply < currentDepth *2)
+	if (depth > (5 * ONE_PLY))
 	{
-		extensions += CHECK_EXTENSION; 
-		
+		extensions += 3;
+	}
+	else if (depth > (3 * ONE_PLY))
+	{
+		extensions += 2;
+	}
+	else
+	{
+		extensions += 1;
+	}
+
+
 		#ifdef DEBUG_STATS
 		stats_checkext+= CHECK_EXTENSION; 
 		#endif
@@ -1617,7 +1598,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 		#ifdef GAMETREE
 		if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1))  { fprintf(fi[ply],"Check extension: depth + %d<br><br><hr><br>\n", CHECK_EXTENSION); }
 		#endif	 
-	}
+	
 
 	recursiveCheckEvasion(&alpha, &beta,&bestValue, &bestMove, depth+extensions, ply, hashMove); 				 
   } 
@@ -1672,6 +1653,15 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 
 		NullValue =  -search(-beta, -beta+1, depth - ((NULL_REDUCTION +1) * ONE_PLY), ply + 1, 1);	
 		
+		/*
+		
+		// 
+		// make sure this is not in vain because we are already at the quiesce-depth ...
+		if (NullValue < beta)
+		{
+			NullValue = -search(-beta, -beta + 1, depth - ((NULL_REDUCTION + 1) * ONE_PLY), ply + 1, 1);
+		}
+		*/
 		AIBoard.unmakeNullMove(); 
 	
 	

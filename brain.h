@@ -37,13 +37,13 @@
 #define EXTREME_EVAL 10000
 							/* Almost as bad/good as a mate, but shouldn't result in mate announcement */
 
-#define MAX_SEARCH_DEPTH 32
+#define MAX_SEARCH_DEPTH 48
 /* The most depth db will search in normal search.cc */
 
-#define DEPTH_LIMIT 48
+#define DEPTH_LIMIT 64
 /* The most depth that Sunsetter will ever get to */
 
-#define MAX_QUIESCE_SEARCH_DEPTH 48
+#define MAX_QUIESCE_SEARCH_DEPTH 64
 /* The most depth that Sunsetter will search in the quiescesce search */
 
 
@@ -81,7 +81,8 @@ extern int		NK_FACTOR;
 extern int		BC_FACTOR;  
 extern int		DE_FACTOR;  
 
-
+extern int		paramA;
+extern int		paramB;
 
 
 extern int pValue[PIECES]; 

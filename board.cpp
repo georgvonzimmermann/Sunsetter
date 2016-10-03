@@ -1985,8 +1985,8 @@ void boardStruct::showDebugInfo()
 	   whiteTime, blackTime);
    sprintf(rightSide[4], "Material: %d Development: %d",
       material, development);
-   sprintf(rightSide[3], "Control: %d",
-       boardControlEval());
+   sprintf(rightSide[3], "Control: %d Total Eval: %d", 
+       boardControlEval(), eval());
    sprintf(rightSide[2], "Can Castle: WK: %d WQ: %d BK: %d BQ: %d", 
       canCastle[WHITE][KING_SIDE], canCastle[WHITE][QUEEN_SIDE],
       canCastle[BLACK][KING_SIDE], canCastle[BLACK][QUEEN_SIDE]);

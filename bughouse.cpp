@@ -89,6 +89,8 @@ int		FIXED_DEPTH;
 int		CAPTURE_EXTENSION,CHECK_EXTENSION,FORCING_EXTENSION ; 
 int		NK_FACTOR, BC_FACTOR, DE_FACTOR; 
 int		CC_DEPTH, NULL_REDUCTION; 
+int		paramA = 0;
+int		paramB = 0;
 
 int		pValue[PIECES]  = {0, 0, 0, 0, 0, 0, 0 };  
 
