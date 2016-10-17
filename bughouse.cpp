@@ -131,7 +131,7 @@ void setDefaultValues()
 
 CC_DEPTH = 3; 
 
-FIXED_NODES = 30000; //  50000; //  200000;
+FIXED_NODES =			0;
 FIXED_DEPTH=			0;
 CHECK_EXTENSION=		(ONE_PLY * 3) / 4 ; 
 CAPTURE_EXTENSION=		ONE_PLY / 2;

@@ -55,7 +55,7 @@ int stats_hashFillingUp;
 int stats_hashSize;
 
 
-const int FractionalDeep[MAX_SEARCH_DEPTH + 1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72 };
+const int FractionalDeep[MAX_SEARCH_DEPTH + 1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 999 };
 		/* The implementation allows to experiment with fractional deepening, for example smaller steps at higher depths*/
 
 
@@ -135,7 +135,7 @@ static void printPrincipalVar(int valueReached)
 	if ((timeUsed < 2) && !analyzeMode) return;
 	
 	// translate mate values to xboard standard
-	/*
+	
 	if (valueReached > MATE)
 	{
 		valueReached -= MATE_IN_ONE;
@@ -149,7 +149,7 @@ static void printPrincipalVar(int valueReached)
 		valueReached *=2;
 		valueReached -= 32768;
 	}
-	*/
+	
 
 	if ((gameBoard.getColorOnMove() == BLACK) && analyzeMode)
 		valueReached = -valueReached; // kinda a kludge, but it works
@@ -638,7 +638,7 @@ assert (n <= count); // this checks that the hash move we
   }
 
 
-  if (((gameBoard.timeToMove() && (currentDepth >= 2))|| ((FIXED_DEPTH) && (currentDepth >= FIXED_DEPTH))) && (!sitting)) 
+  if (((gameBoard.timeToMove() && (currentDepth >= 2)) || ((FIXED_DEPTH) && (currentDepth >= FIXED_DEPTH))) && (!sitting)) 
   { 
 	  stopThought(); 	  
 	  break;
