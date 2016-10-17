@@ -129,12 +129,11 @@ int nextMoveOrResult(FILE *fin, char *result)
 int testbpgn(int argc, char **argv)
 {
  char buf[MAX_STRING]; 
+ int depth;
  int skipmoves; // this is non-zero if we only want to look at one specific move
  color skipcolor = WHITE; // the color to Move if we want to look at a specific move
  FILE *fin;
-
-
- move m;
+ move m, m2; // the best moves sunsetter found
 
  if ((argc < 3) || (argc > 5)) {   // there was no input .bpgn specified or too many args
     output("Usage:\n");
@@ -158,65 +157,77 @@ for(;;)    // go through the whole game
 
 	if (gameBoard.getColorOnMove() == WHITE) { sprintf (buf, "%d.", (gameBoard.getMoveNum() / 2)+1 ); output (buf); }
 
-	if (nextMoveOrResult(fin, buf)) {
+	if (nextMoveOrResult(fin, buf)) 
+	{
           output("  EOF \n\n");
           break;
-          }
+    }
 
 	if (strcmp(buf, "OVER"))
 	{
 	
-    m = gameBoard.algebraicMoveToDBMove(buf);
+		m = gameBoard.algebraicMoveToDBMove(buf);
 
-    if(gameBoard.playMove(m, 0)) {
-		  output("Illegal move in file: ");
-		  output(buf); 
-		  output("\n"); 
-          break;
-        }
+		if(gameBoard.playMove(m, 0)) 
+		{
+			  output("Illegal move in file: ");
+			  output(buf); 
+			  output("\n"); 
+			  break;
+		}
 	}
 	
-    if(!strcmp(buf, "OVER") || (gameBoard.isCheckmate())) {
-          sprintf(buf,"\n\n");output(buf); 
-          sprintf(buf," Searches overall: %d\n", stats_overallsearches);output(buf);
-		  sprintf(buf,"QSearches overall: %d\n", stats_overallqsearches);output(buf);
-		  sprintf(buf,"ClockTicks       : %d\n", stats_overallticks);output(buf);
-		  sprintf(buf,"mNPS             : %d\n\n", (stats_overallsearches+stats_overallqsearches) / (stats_overallticks +1)); output(buf);
+	
+	if(!strcmp(buf, "OVER") || (gameBoard.isCheckmate())) 
+		{
+			  sprintf(buf,"\n\n");output(buf); 
+			  sprintf(buf," Searches overall: %d\n", stats_overallsearches);output(buf);
+			  sprintf(buf,"QSearches overall: %d\n", stats_overallqsearches);output(buf);
+			  sprintf(buf,"ClockTicks       : %d\n", stats_overallticks);output(buf);
+			  sprintf(buf,"mNPS             : %d\n\n", (stats_overallsearches+stats_overallqsearches) / (stats_overallticks +1)); output(buf);
 
-#ifdef DEBUG_STATS		  
-		  sprintf(buf,"Debug A: %d\n", stats_overallDebugA);output(buf);
-		  sprintf(buf,"Debug B: %d\n", stats_overallDebugB);output(buf);		  
-#endif 		  		  
-		  break;
+	#ifdef DEBUG_STATS		  
+			  sprintf(buf,"Debug A: %d\n", stats_overallDebugA);output(buf);
+			  sprintf(buf,"Debug B: %d\n", stats_overallDebugB);output(buf);		  
+	#endif 		  		  
+			  break;
         }	
 	
+		output (buf);
+		output (" ");
 
+		gameBoard.setDeepBugColor(gameBoard.getColorOnMove());
+					   // make sure Sunsetter always thinks it is playing the color to move next
 
-	
-	output (buf);
-    output (" ");
+		if ((skipmoves == 0) || (skipmoves == (((gameBoard.getMoveNum()-1) /2)+1)) && (gameBoard.getColorOnMove() == skipcolor) ) 
+					   // search all moves or only the one given as 4th argument
+		{
+			for (depth = 7; depth < 14; depth++)
+			{
+				FIXED_DEPTH = depth;
+				
+				paramB = 0;
+				zapHashValues();
+				output("\n\n");
+				findMove(&m);
 
-    gameBoard.setDeepBugColor(gameBoard.getColorOnMove());
-                   // make sure Sunsetter always thinks it is playing the color to move next
+				paramB = 1;
+				zapHashValues();
+				output("\n\n");
+				findMove(&m2);
 
-    if ((skipmoves == 0) || (skipmoves == (((gameBoard.getMoveNum()-1) /2)+1)) && (gameBoard.getColorOnMove() == skipcolor) ) 
-                   // search all moves or only the one given as 4th argument
+				if (m != m2)
+				{
+					output("Different move suggestions at depth ");
+					// output(depth); output(" :");
+					DBMoveToRawAlgebraicMove(m, buf);
+					output(buf); output(" and ");
+					DBMoveToRawAlgebraicMove(m2, buf);
+					output(buf); output("\n\n");
+				}
 
-    {
-	zapHashValues(); 
-	output ("\n\n"); 
-    findMove(&m);           // do the search. Currently Sunsetter takes as much time as if it would
-                            // have InitialTime left.
-
-
-
-    DBMoveToRawAlgebraicMove(m,buf);
-    output ("Sunsetter suggests:"); 
-	output (buf); 
-	output ("\n\n");
-
-
-    }
+			}
+		}
 
     }
     fclose(fin);

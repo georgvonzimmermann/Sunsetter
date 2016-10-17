@@ -447,6 +447,7 @@ assert (!AIBoard.badMove(m));
 			 ||  (AIBoard.escapingAttack(m.from(), m.to())) )
 			// c) we are escaping with the piece that got attacked in the move before
 
+		  // what about blocking attack ?
 	  {
 		  razor = 0; 
 
@@ -458,7 +459,12 @@ assert (!AIBoard.badMove(m));
 	  }
 	  else
 	  {
-		  razor = -ONE_PLY / 2; 
+			  if (depth - ONE_PLY < 6 * ONE_PLY)
+				  razor = -4;
+			  else if (depth - ONE_PLY < 8 * ONE_PLY)
+				  razor = -3;
+			  else
+				  razor = -2;	  
 
 #ifdef GAMETREE
 	  DBMoveToRawAlgebraicMove(m, buf);
@@ -767,7 +773,6 @@ if ((*bestValue <= -EXTREME_EVAL) && (! bestMoveLastPly.isBad()) && (!analyzeMod
    printPrincipalVar(*bestValue);   // whisper the last ply searched 
    endClockTime = getSysMilliSecs();
 
-
 	output("\n");
     output("Found move: ");
     DBMoveToRawAlgebraicMove(*rightMove, buf);
@@ -812,8 +817,6 @@ if ((*bestValue <= -EXTREME_EVAL) && (! bestMoveLastPly.isBad()) && (!analyzeMod
 
 }
 
-
-
 /* Function: ponder
  * Input:    None.
  * Output:   None.
@@ -826,7 +829,6 @@ if ((*bestValue <= -EXTREME_EVAL) && (! bestMoveLastPly.isBad()) && (!analyzeMod
 void ponder()
 {
 
-  
   move m[MAX_MOVES], tmp;
 
   int values[MAX_MOVES],  n, count, value, done;
@@ -955,6 +957,7 @@ inline void recursiveCheckEvasion(int *alpha, int *beta,int *bestValue, move *be
 {
 
 	int n, value;
+	int realcount;
 	int count = 0; 
 	move *m; 
 	m = searchMoves[ply]; 
@@ -969,8 +972,11 @@ inline void recursiveCheckEvasion(int *alpha, int *beta,int *bestValue, move *be
 	count += AIBoard.checkEvasionCaptures(m+count); 		
 	count += AIBoard.checkEvasionOthers(m+count);			
 
+	realcount = count;
+	if (!hashMove.isBad()) realcount--;
+
 	// if there is only 1 legal move 
-	if ((count == 1) || (!hashMove.isBad()) && (count == 2))
+	if (realcount == 1)
 	{
 		depthWithExtensions += FORCING_EXTENSION; 
 		
@@ -978,7 +984,19 @@ inline void recursiveCheckEvasion(int *alpha, int *beta,int *bestValue, move *be
 		stats_forceext+= FORCING_EXTENSION; 
 		#endif
 	}
-	
+	else if ((realcount > 1) && (realcount < 4))
+	{
+		depthWithExtensions += 1;
+	}
+	// testing is unclear about this, keeping it because it seems right.
+	else if (realcount > 8)
+	{
+		depthWithExtensions -= 1;
+	}
+
+
+
+
 	for(n = 0; n < count; n++) 
 	
 	{
@@ -1107,8 +1125,16 @@ inline int recursiveFullSearch(int *alpha, int *beta, int *bestValue, move *best
 			stats_Razors++;
 			#endif
 
-			// Recursive Search call 
-			value = -search(-(*beta), -(*alpha), depthWithExtensions - ONE_PLY / 2,  ply + 1, 0);		
+
+			if (depthWithExtensions < 6 * ONE_PLY )
+				value = -search(-(*beta), -(*alpha), depthWithExtensions - 4, ply + 1, 0);
+			else if (depthWithExtensions < 8 * ONE_PLY)
+				value = -search(-(*beta), -(*alpha), depthWithExtensions - 3, ply + 1, 0);
+			else
+				value = -search(-(*beta), -(*alpha), depthWithExtensions - 2, ply + 1, 0);
+
+			
+
 			AIBoard.unchangeBoard();
 
 			#ifdef GAMETREE					
@@ -1123,8 +1149,6 @@ inline int recursiveFullSearch(int *alpha, int *beta, int *bestValue, move *best
 		}
 			
 	
-	
-			
 			if (value > *bestValue) 
 			{		
 				*bestValue = value;  
@@ -1143,8 +1167,53 @@ inline int recursiveFullSearch(int *alpha, int *beta, int *bestValue, move *best
 return 0; 
 }
 
+//  searching all checks
+int recursiveChecks(int *alpha, int *beta, int *bestValue, move *bestMove, int depthWithExtensions, int ply, move hashMove)
+
+{
+
+	int n, value, count, captureGain;
+	move *m;
+	m = searchMoves[ply];
+	
+	value = -INFINITY;
+
+	count = AIBoard.aiMoves(m);
 
 
+
+	for (n = 0; n < count; n++)
+
+	{
+		if ((m[n] == hashMove) && (!hashMove.isBad())) continue;
+
+
+		assert(!AIBoard.badMove(m[n]));
+
+
+		AIBoard.changeBoard(m[n]);
+
+		if (AIBoard.isInCheck(AIBoard.getColorOnMove()))
+		{
+			value = -search(-(*beta), -(*alpha), depthWithExtensions, ply + 1, 0);
+		}
+		AIBoard.unchangeBoard();
+
+		if (value > *bestValue)
+		{
+			*bestValue = value;
+			*bestMove = m[n];
+			savePrincipalVar(*bestMove, ply + 1);
+
+		}
+
+		if (*bestValue > *alpha) *alpha = *bestValue;
+
+		if (*bestValue >= *beta) return 1;
+
+	}
+	return 0;
+}
 
 /* Function: recursiveSearch()
  *
@@ -1207,8 +1276,6 @@ int recursiveSearch(int *alpha, int *beta,int *bestValue, move *bestMove,int dep
 
 assert (!AIBoard.badMove(m[n]));
 		AIBoard.changeBoard(m[n]);
-
-
 	
 		#ifdef DEBUG_STATS
 		stats_MakeUnmake[searchType]++;
@@ -1395,7 +1462,12 @@ assert (ply <= DEPTH_LIMIT);
 
   pollForInput();
   
-  stats_positionsSearched++;		    
+  stats_positionsSearched++;
+
+  if (FIXED_NODES && (stats_positionsSearched + stats_quiescensePositionsSearched > FIXED_NODES))
+  {
+	  stopThought();
+  }
 
 assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when 
 												  // this one fails :)
@@ -1544,7 +1616,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 		if (AIBoard.captureExtensionCondition())
 
 		{
-			extensions += CAPTURE_EXTENSION;
+		extensions += CAPTURE_EXTENSION;
 		/*
 		// Tried the following 2 versions, both worse (= unchanged)
 
@@ -1610,11 +1682,10 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 	 AIBoard.setCheckHistory(0);
 	 AIBoard.setBestCapture(); // this is probably not needed, since before this point orderCaptures has already been called. But just to be sure.
 	 
-  	 if ((depth < ONE_PLY) || (ply>MAX_SEARCH_DEPTH)) 
-		{
+	 if ((depth < ONE_PLY) || (ply>MAX_SEARCH_DEPTH)) 
 
-		
-
+	 {
+	
 #ifdef GAMETREE
 		if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
 		{ 
@@ -1636,9 +1707,9 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 	
 	
 	if (depth > CC_DEPTH * ONE_PLY)
+		
 	{
 	
-
 	 /* NullMove : passing should be worse than any other move. */
 	
 	if ((!wasNullMove) && (NULL_REDUCTION))
@@ -1647,7 +1718,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 	  //  no Null move try if depth allows standpat
 	{
 	 
-
+		//TODO: do we really need to try nullmove if eval() is already worse than i.e. alpha?
 
 		AIBoard.makeNullMove();
 
@@ -1655,17 +1726,13 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 		
 		/*
 		
-		// 
-		// make sure this is not in vain because we are already at the quiesce-depth ...
 		if (NullValue < beta)
 		{
 			NullValue = -search(-beta, -beta + 1, depth - ((NULL_REDUCTION + 1) * ONE_PLY), ply + 1, 1);
 		}
 		*/
 		AIBoard.unmakeNullMove(); 
-	
-	
-	
+
 		#ifdef GAMETREE
 		if ((tree_positionsSaved < GAMETREE) && (currentDepth == FIXED_DEPTH - 1)) 
 		{fprintf (fi[ply]," Null Move Value : %d <br><br>\n", NullValue); }
@@ -1722,9 +1789,9 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 			 * it was not taken )
 			 */
 
-			if ((wasNullMove) || (AIBoard.standpatCondition()))
-			
-			{
+			// This needs further testing
+			// if ((wasNullMove) || (AIBoard.standpatCondition()))
+			// {
 				
 				Currenteval = AIBoard.eval() ; 
 				bestValue = Currenteval; 
@@ -1751,6 +1818,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 
 					return bestValue; 
 				}
+			/*
 			}
 
 			else 
@@ -1771,10 +1839,13 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 			
 			
 			}
-			if ( (! recursiveHash(&alpha, &beta,&bestValue, &bestMove, depth+extensions, ply, hashMove)) && 
-				 (! recursiveSearch(&alpha, &beta,&bestValue, &bestMove, depth+extensions, ply, hashMove, WINNING_CAP)) )
-				 recursiveSearch(&alpha, &beta,&bestValue,&bestMove, depth+extensions, ply, hashMove, MATE_TRIES); 				 		
-	
+			*/
+
+		
+			if ((!recursiveHash(&alpha, &beta, &bestValue, &bestMove, depth + extensions, ply, hashMove)) &&
+				(!recursiveSearch(&alpha, &beta, &bestValue, &bestMove, depth + extensions, ply, hashMove, WINNING_CAP)))
+				recursiveSearch(&alpha, &beta, &bestValue, &bestMove, depth + extensions, ply, hashMove, MATE_TRIES);
+				
 		} // End of <= depth * CC_DEPTH left
 
 
@@ -1788,7 +1859,6 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
 
 	 if (currentRules == CRAZYHOUSE)  
 	 {
-		// bestValue = -MATE_IN_ONE + AIBoard.bughouseMateEval();
 		 bestValue = -MATE_IN_ONE + ply / 2 + 1;
      } 
 	 else // current rules = bughouse
@@ -1806,7 +1876,7 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
  
 
 
-  /* Now that the seach is over, save information to transposition tables */
+  /* Now that the search is over, save information to transposition tables */
 
    
   if (!stopThinking)

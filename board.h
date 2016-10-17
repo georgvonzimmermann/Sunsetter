@@ -599,10 +599,11 @@ struct boardStruct {
   int highestAttacked(square moveTo);	/* Razor full search conditions */
   int escapingAttack(square movedFrom, square moveTo);
 
-  int captureExtensionCondition();		
+  int captureExtensionCondition();
+  int reSearchCondition(move bestMove);
 
   int standpatCondition();				
-
+  int checksInRow();
  
   #ifdef GAMETREE  // needed when outputing a game tree in html 
   

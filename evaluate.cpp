@@ -226,7 +226,7 @@ int boardStruct::adjustInHand()
 		if (hand[BLACK][BISHOP])
 			mAjustment -= 20 + hand[BLACK][BISHOP] * 10;
 
-		return mAjustment; 
+		return mAjustment;
 }
 
 /* Function: eval
@@ -424,6 +424,16 @@ int boardStruct::escapingAttack(square movedFrom, square moveTo)
 		
 }
 
+int boardStruct::reSearchCondition(move bestMove)
+{
+	if ((takeBackHistory[moveNum - 1].captured != NONE) // opp captured a piece 
+		&& (moveHistory[moveNum - 2].to() == moveHistory[moveNum - 1].to()) // on the square we last moved to
+		&& ((bestMove.to() != moveHistory[moveNum - 1].to()) // and we didnt capture back 
+			|| (pValue[takeBackHistory[moveNum - 1].captured] > pValue[pieceOnSquare(bestMove.to())] + 20 )))
+				// or what we captured back isnt worth as much as what opp captured 
+		return 1;
+	return 0; 
+}
 
 /* Function: captureExtensionCondition
  * Input:    None
@@ -440,6 +450,7 @@ int boardStruct::captureExtensionCondition()
 	if (moveHistory[moveNum - 2].to() == moveHistory[moveNum - 1].to())
 		return 1;
 	*/
+	
 	if (	(takeBackHistory[moveNum-1].captured != NONE) && 
 			(moveHistory[moveNum-2].to() == moveHistory[moveNum-1].to())  &&
 			( (! attacks[OFF_MOVE][moveHistory[moveNum-1].to()]) ||
@@ -451,7 +462,23 @@ int boardStruct::captureExtensionCondition()
 
 }
 
+int boardStruct::checksInRow()
+{
+	int a;
+	int consecutiveChecks = 0;
+	for (a = 0; a <= 2; a++) // return 0, 1, 2 or 3 consecutive checks
+	{
+		if ((moveNum - (1 + (a * 2))) < 0)
+			break;
+		if (!checkHistory[moveNum - (1 + (a * 2))])
+		{
+			consecutiveChecks ++;
+			break;
+		}
+	}
+	return consecutiveChecks;
 
+}
 
 /* Function: standpatCondition
  * Input:    None

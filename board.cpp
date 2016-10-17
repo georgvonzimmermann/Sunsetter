@@ -1784,14 +1784,12 @@ int boardStruct::outOfTime(color c)
  * Function: timeToMove
  * Input:    None.
  * Output:   1 if Sunsetter should move
- * Purpose:  Used to see if Sunsetter has taken the maximium amount of time 
+ * Purpose:  Used to see if Sunsetter has taken the maximium amount of time or Nodes
  *           alloted for a move
  */
 
 int boardStruct::timeToMove()
    {
-	
-
 
    double timeused;
    double currentTime;
@@ -1799,7 +1797,7 @@ int boardStruct::timeToMove()
    currentTime = getSysMilliSecs(); 
    timeused = currentTime-lastMoveTime; 
 
-   if ( timeused >= millisecondsPerMove)  return 1;   
+   if (timeused >= millisecondsPerMove) return 1;
 
    return 0;
 

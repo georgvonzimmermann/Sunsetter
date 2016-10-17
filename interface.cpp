@@ -763,19 +763,13 @@ void parseOption(const char *str)
 
 	  output (" \n");
 		
-	  	  
-
 	  stopThought(); 
 	  gameBoard.resetBoard();
       zapHashValues();
       resetAI();
 	  
-
- 
       gameInProgress = 1;
 	  soughtGame = 0; 
-
-
 
 #ifdef DEBUG_XBOARD
 output ("//D: variant parsed, board reset and set to bug or zh \n"); 
@@ -866,7 +860,10 @@ output ("//D: variant parsed, board reset and set to bug or zh \n");
    else if(!strcmp(arg[0], "sd"))
    { 
 		FIXED_DEPTH = atoi(arg[1]);
-		printf("set fixed depth to %d\n", FIXED_DEPTH);
+   }
+   else if (!strcmp(arg[0], "snodes"))
+   {
+	   FIXED_NODES = atoi(arg[1]);
    }
 
    else if(!strcmp(arg[0], "nullreduct"))

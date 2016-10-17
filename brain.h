@@ -66,7 +66,8 @@ struct PrincipalVariation {
 extern char		personalityIni[10][512]; 
 extern int		PERSONALITY; 
 
-extern int		FIXED_DEPTH; 
+extern int		FIXED_DEPTH;
+extern int		FIXED_NODES;
 
 extern int		CHECK_EXTENSION;
 extern int		CAPTURE_EXTENSION;

@@ -224,7 +224,7 @@ move *boardStruct::orderCaptures(move *m)
 	   {
 		  // either a promotion, or an e.p. capture 
 		   // this estimation will do 
-
+		   // TODO FIX this
 		   values[count] = pValue[KNIGHT];
 	   }
       }
