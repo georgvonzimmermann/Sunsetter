@@ -56,7 +56,6 @@ int stats_hashSize;
 
 
 const int FractionalDeep[MAX_SEARCH_DEPTH + 1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72 };
-// const int FractionalDeep [MAX_SEARCH_DEPTH+1] = { 0, 0, ONE_PLY, ONE_PLY * 2, ONE_PLY * 3, ONE_PLY * 4, ONE_PLY * 5, ONE_PLY * 6, ONE_PLY * 7, ONE_PLY * 8, ONE_PLY * 9, ONE_PLY * 10, ONE_PLY * 11, ONE_PLY * 12, ONE_PLY * 13, ONE_PLY * 14, ONE_PLY * 15, ONE_PLY * 16, ONE_PLY * 17, ONE_PLY * 18, ONE_PLY * 19, ONE_PLY * 20, ONE_PLY * 21, ONE_PLY * 22, ONE_PLY * 23, ONE_PLY * 24, ONE_PLY * 25, ONE_PLY * 26, ONE_PLY * 27, ONE_PLY * 28, ONE_PLY * 29, ONE_PLY * 30 };
 		/* The implementation allows to experiment with fractional deepening, for example smaller steps at higher depths*/
 
 
@@ -808,7 +807,7 @@ if ((*bestValue <= -EXTREME_EVAL) && (! bestMoveLastPly.isBad()) && (!analyzeMod
  	stats_overallticks += (int) (endClockTime - startClockTime); 	
   }  
 
-  if ((analyzeMode || forceMode) && (currentDepth >= MAX_SEARCH_DEPTH))
+  if ((analyzeMode || forceMode) && ((currentDepth >= MAX_SEARCH_DEPTH) || ((FIXED_DEPTH) && (currentDepth >= FIXED_DEPTH))))
   {
     waitForInput();
   }
