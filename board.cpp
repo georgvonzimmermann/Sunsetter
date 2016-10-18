@@ -647,7 +647,8 @@ assert ((hashMoveCircle >= 0) && (hashMoveCircle <= 7));
    {
       for(p = PAWN; p <= QUEEN; p = (piece) (p + 1))
 	  {
-         gameBoard.setPieceInHand(c, p, 0);
+         // no need to use setPieceInHand() which updates material and hash key.
+		  hand[c][p] = 0;
 	  }
    }
  
@@ -733,7 +734,7 @@ void boardStruct::setBoard(const char *fen, const char *turn, const char *castle
 	pieces[PAWN] = pieces[ROOK] = pieces[KNIGHT] = pieces[BISHOP] = pieces[QUEEN] = pieces[KING] = qword(0);
 	for (int c = WHITE; c <= BLACK; c++) {
 		for (piece p = PAWN; p <= QUEEN; p++) {
-			setPieceInHand(c, p, 0);
+			hand[c][p] = 0;
 		}
 	}
 	memset(position, NONE, sizeof(position));
