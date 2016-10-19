@@ -140,7 +140,7 @@ static void printPrincipalVar(int valueReached)
 	{
 		valueReached -= MATE_IN_ONE;
 		valueReached *=2;
-		valueReached += 32766;
+		valueReached += 32768;
 	}
 
 	if (valueReached < -MATE)
