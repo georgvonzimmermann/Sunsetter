@@ -534,6 +534,10 @@ struct boardStruct {
 									and move now */
 
   int getMoveNum();
+
+
+  int isNotRepDrawSearch();  /* FALSE if the position has been repeated or 50 moves rule */
+
   int getPieceInHand(color c, piece p);
   
   color getDeepBugColor();

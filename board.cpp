@@ -819,10 +819,11 @@ void boardStruct::setBoard(const char *fen, const char *turn, const char *castle
 	}
 
 	// En passant
-	if ('a' <= ep[0] && ep[0] <= 'h' && (ep[1] == '3' || ep[1] == '6')) {
+	if ('a' <= ep[0] && ep[0] <= 'h' && (ep[1] == '3' || ep[1] == '6')) 
+	{
 		int file = ep[0] - 'a';
-		int rank = ep[1] - '0';
-		enPassant = rank * 8 + file;
+		int rank = ep[1] - '1';
+		enPassant = rank * ONE_RANK + file * ONE_FILE;
 	}
 	else enPassant = OFF_BOARD;
 
@@ -1015,6 +1016,41 @@ void boardStruct::unmakeNullMove()
 		addEnPassantHash(enPassant);
    }
 
+
+/*
+* Function: isNotRepDrawSearch
+* Input:    ply of currentSearch
+* Output:	 draw (0) or not
+* Purpose:  find out whether this position is a draw by repetition or by 50 move rule
+*			 this is using a "2 move rule" 
+*/
+
+int boardStruct::isNotRepDrawSearch()
+{
+
+	int i;
+
+	i = moveNum - 2;
+
+	while (i > 1)
+	{
+		i--;
+		if ((takeBackHistory[i].captured != NONE) || (moveHistory[i].moved() == PAWN))
+			break;
+		i--;
+		if ((takeBackHistory[i].captured != NONE) || (moveHistory[i].moved() == PAWN))
+			break;
+
+		if (takeBackHistory[i].oldHash == hashValue)
+		{
+			return 1;
+		}
+	}
+
+	if (moveNum - i > 100) return 1;
+
+	return 0;
+}
 
 
 /*

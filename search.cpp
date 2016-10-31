@@ -160,10 +160,16 @@ static void printPrincipalVar(int valueReached)
 	{
 		assert(!AIBoard.badMove(pv.moves[0][n]));
 
-		AIBoard.changeBoard(pv.moves[0][n]); variationLength++;
+		AIBoard.changeBoard(pv.moves[0][n]); 
+		variationLength++;
 
 		DBMoveToRawAlgebraicMove(pv.moves[0][n], buf);
 		strcat(pvtxt, buf); strcat(pvtxt, " ");
+
+		if (AIBoard.isNotRepDrawSearch()) // print the valuation only up to the first repetition
+		{
+			break;
+		}
 	}
 
 	if (!xboardMode) 
@@ -192,7 +198,8 @@ static void printPrincipalVar(int valueReached)
 		}
 	}
 
-	for (n = variationLength - 1; n >= 0; n--) {
+	for (n = variationLength - 1; n >= 0; n--) 
+	{
 		AIBoard.unchangeBoard();
 	}
 
@@ -597,14 +604,6 @@ assert (n <= count); // this checks that the hash move we
     }
   } 
   
-
-  /* this is an easy and nice repetition detection :) 
-   * the current position is stored into the hash with how much we'd like a draw (not very much if we higher rated than opp) and a  depth so big it 
-   * will never be overwritten
-   */
-  tmp.makeBad(); 
-  // commented out for now, needs further testing (or use version from chess sunsetter) @georg
-  // if (!analyzeMode) AIBoard.store(MAX_SEARCH_DEPTH, tmp, -ratingDiff, -INFINITY, +INFINITY);
 
   calcTimeToSpend();
 
@@ -1504,6 +1503,13 @@ assert ( stats_positionsSearched < 1000000000 );  // hoping for the day when
   orgAlpha = alpha;
   orgBeta = beta;
   
+  if (AIBoard.isNotRepDrawSearch())
+  {
+	  // Todo: GAMETREE_END("Draw")
+	  AIBoard.store((max(depth, 0)), bestMove, 0, orgAlpha, orgBeta, ply);
+
+	  return 0; // Repetition
+  }
 
   if ((te = AIBoard.lookup()) != NULL) 
   
